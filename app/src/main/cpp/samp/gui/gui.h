@@ -22,7 +22,7 @@
 #include "samp_widgets/chat.h"
 #include "samp_widgets/spawn.h"
 #include "samp_widgets/buttonpanel.h"
-#include "samp_widgets/PlayerTabList.h"
+#include "samp_widgets/playertablist.h"
 #include "samp_widgets/voicebutton.h"
 
 #include "samp_widgets/dialogs/dialog.h"
