@@ -1,4 +1,4 @@
-123
+120
 assetfile.txt
 scache.txt
 scache_small.txt
@@ -10,12 +10,9 @@ data/360Default1280x720.cfg
 data/360Default960x720.cfg
 data/fonts.dat
 data/handling.cfg
-data/mainV1.scm
-data/scriptv1.img
 data/ShopUVs.dat
 data/TouchDefaultPhone3x2.cfg
 data/TouchDefaultPhoneWidescreen.cfg
-data/TouchDefaultPhoneWidescreen2.cfg
 data/TouchDefaultTablet4x3.cfg
 data/TouchDefaultTabletWidescreen.cfg
 data/script/mainV1.scm
