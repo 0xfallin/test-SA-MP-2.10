@@ -30,14 +30,6 @@ jobs:
           api-level: 34
           build-tools: 34.0.0
 
-      # 4. Install NDK r16b (correct indent + syntax)
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r21e         # or the exact revision you need
-          add-to-path: true         # optional, depending on your build
-    
-
       # 5. Cache Gradle
       - name: Cache Gradle
         uses: actions/cache@v4
