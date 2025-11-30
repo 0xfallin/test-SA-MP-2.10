@@ -13,7 +13,7 @@
 #include "StackTrace.h"
 #include "servers.h"
 
-// voice
+// voice h
 #include "voice_new/Plugin.h"
 
 #include "vendor/armhook/patch.h"

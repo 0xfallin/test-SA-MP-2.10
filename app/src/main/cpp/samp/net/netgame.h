@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../vendor/raknet/RakClientInterface.h"
-#include "../vendor/raknet/RakNetworkFactory.h"
-#include "../vendor/raknet/PacketEnumerations.h"
-#include "../vendor/raknet/StringCompressor.h"
+#include "../vendor/RakNet/RakClientInterface.h"
+#include "../vendor/RakNet/RakNetworkFactory.h"
+#include "../vendor/RakNet/PacketEnumerations.h"
+#include "../vendor/RakNet/StringCompressor.h"
 
-#include "../vendor/raknet/SAMP/SAMPRPC.h"
+#include "../vendor/RakNet/SAMP/SAMPRPC.h"
 
 typedef unsigned short PLAYERID;
 typedef unsigned short VEHICLEID;
