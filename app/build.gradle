@@ -52,7 +52,8 @@ android {
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
-            arguments "-DANDROID_STL=c++_shared"
+            version "3.22.1"
+        arguments = listOf("-DANDROID_STL=c++_shared")
         }
     }
 
