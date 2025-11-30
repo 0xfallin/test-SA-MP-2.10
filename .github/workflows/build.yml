@@ -31,10 +31,12 @@ jobs:
           build-tools: 34.0.0
 
       # 4. Install NDK r16b (correct indent + syntax)
-      - name: Setup NDK r21
-        uses: android-actions/setup-ndk@v2
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
         with:
-          ndk: r21
+          ndk-version: r21e         # or the exact revision you need
+          add-to-path: true         # optional, depending on your build
+    
 
       # 5. Cache Gradle
       - name: Cache Gradle
