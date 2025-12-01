@@ -12,7 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
-
+import com.samp.mobile.R;
 import com.samp.mobile.game.SAMP;
 
 public class MainActivity extends AppCompatActivity {

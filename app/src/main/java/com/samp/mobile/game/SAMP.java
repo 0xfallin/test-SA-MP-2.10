@@ -13,7 +13,6 @@ import com.samp.mobile.game.ui.dialog.DialogManager;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 
 @Obfuscate
 public class SAMP extends GTASA implements CustomKeyboard.InputListener {
@@ -51,19 +50,20 @@ public class SAMP extends GTASA implements CustomKeyboard.InputListener {
         mAttachEdit = new AttachEdit(this);
         mLoadingScreen = new LoadingScreen(this);
 
-        // Ensure SAMP folder exists
-        sampFolder = new File(getExternalFilesDir(null), "SAMP");
-        if (!sampFolder.exists()) {
-            sampFolder.mkdirs();
-            Log.i(TAG, "Created SAMP folder at: " + sampFolder.getAbsolutePath());
+        // Ensure external storage is available
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            sampFolder = new File(getExternalFilesDir(null), "SAMP");
+            if (!sampFolder.exists() && !sampFolder.mkdirs()) {
+                Log.e(TAG, "Failed to create SAMP folder at: " + sampFolder.getAbsolutePath());
+            } else {
+                Log.i(TAG, "SAMP folder ready at: " + sampFolder.getAbsolutePath());
+            }
+        } else {
+            Log.e(TAG, "External storage not available. SAMP initialization may fail!");
+            sampFolder = getFilesDir(); // fallback
         }
 
-        try {
-            // Pass full path to native initialization
-            initializeSAMP(sampFolder.getAbsolutePath());
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Native initialization failed: " + e.getMessage());
-        }
+        safeNativeCall(() -> initializeSAMP(sampFolder.getAbsolutePath()), "initializeSAMP");
     }
 
     @Override
@@ -74,28 +74,20 @@ public class SAMP extends GTASA implements CustomKeyboard.InputListener {
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "Encoding error: " + e.getMessage());
         }
-
-        try {
-            onInputEnd(bytes);
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Native onInputEnd error: " + e.getMessage());
-        }
+        final byte[] data = bytes;
+        safeNativeCall(() -> onInputEnd(data), "onInputEnd");
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        try {
-            onEventBackPressed();
-        } catch (UnsatisfiedLinkError ignored) {}
+        safeNativeCall(this::onEventBackPressed, "onEventBackPressed");
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            try {
-                onEventBackPressed();
-            } catch (UnsatisfiedLinkError ignored) {}
+            safeNativeCall(this::onEventBackPressed, "onEventBackPressed");
         }
         return super.onKeyDown(keyCode, event);
     }
@@ -128,5 +120,16 @@ public class SAMP extends GTASA implements CustomKeyboard.InputListener {
     public void exitGame() {
         finishAndRemoveTask();
         System.exit(0);
+    }
+
+    /** Helper to safely call native methods and log errors */
+    private void safeNativeCall(Runnable nativeCall, String methodName) {
+        try {
+            nativeCall.run();
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Native method failed: " + methodName + " -> " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Unexpected error in native method: " + methodName, e);
+        }
     }
 }
