@@ -16,10 +16,10 @@ public class GTASA extends WarMedia {
     static String vmVersion;
 
     static {
-        System.out.println("**** Loading SO's for SAMP 2.0");
+        Log.i(TAG, "**** Loading SO's for SAMP 2.0");
         try {
             vmVersion = System.getProperty("java.vm.version");
-            System.out.println("vmVersion " + vmVersion);
+            Log.i(TAG, "VM Version: " + vmVersion);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -30,16 +30,24 @@ public class GTASA extends WarMedia {
             System.loadLibrary("bass");
             System.loadLibrary("SAMP");
 
-            // Optional, safe to load if present
-            try { System.loadLibrary("ImmEmulatorJ"); } catch (UnsatisfiedLinkError ignored) {}
-            try { System.loadLibrary("cleo"); } catch (UnsatisfiedLinkError ignored) {}
-            try { System.loadLibrary("SCAnd"); } catch (UnsatisfiedLinkError ignored) {}
-            try { System.loadLibrary("TouchSenseSDK"); } catch (UnsatisfiedLinkError ignored) {}
-            try { System.loadLibrary("AML"); } catch (UnsatisfiedLinkError ignored) {}
+            // Optional libraries
+            safeLoadLibrary("ImmEmulatorJ");
+            safeLoadLibrary("cleo");
+            safeLoadLibrary("SCAnd");
+            safeLoadLibrary("TouchSenseSDK");
+            safeLoadLibrary("AML");
 
         } catch (UnsatisfiedLinkError e) {
-            e.printStackTrace();
-            Log.e(TAG, "Failed to load native libraries");
+            Log.e(TAG, "Failed to load native libraries", e);
+        }
+    }
+
+    private static void safeLoadLibrary(String libName) {
+        try {
+            System.loadLibrary(libName);
+            Log.i(TAG, "Loaded library: " + libName);
+        } catch (UnsatisfiedLinkError ignored) {
+            Log.w(TAG, "Optional library not found: " + libName);
         }
     }
 
@@ -55,26 +63,9 @@ public class GTASA extends WarMedia {
     }
 
     @Override
-    public void onDestroy() {
-        Log.i(TAG, "GTASA onDestroy");
-        super.onDestroy();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    public void onPause() {
-        Log.i(TAG, "GTASA onPause");
-        super.onPause();
-    }
-
-    @Override
-    public void onRestart() {
-        Log.i(TAG, "GTASA onRestart");
-        super.onRestart();
+    public void onStart() {
+        Log.i(TAG, "GTASA onStart");
+        super.onStart();
     }
 
     @Override
@@ -84,9 +75,9 @@ public class GTASA extends WarMedia {
     }
 
     @Override
-    public void onStart() {
-        Log.i(TAG, "GTASA onStart");
-        super.onStart();
+    public void onPause() {
+        Log.i(TAG, "GTASA onPause");
+        super.onPause();
     }
 
     @Override
@@ -96,8 +87,21 @@ public class GTASA extends WarMedia {
     }
 
     @Override
+    public void onRestart() {
+        Log.i(TAG, "GTASA onRestart");
+        super.onRestart();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.i(TAG, "GTASA onDestroy");
+        super.onDestroy();
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        Log.i(TAG, "GTASA configuration changed");
     }
 
     @Override
@@ -105,7 +109,12 @@ public class GTASA extends WarMedia {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /** Optional stubs for Social Club or other removed features */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return super.onKeyDown(keyCode, event);
+    }
+
+    /** Optional stubs for removed Social Club or features */
     public void EnterSocialClub() {}
     public void ExitSocialClub() {}
     public void AfterDownloadFunction() {}

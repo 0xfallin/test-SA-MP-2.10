@@ -1,6 +1,7 @@
 package com.samp.mobile.game;
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -10,11 +11,13 @@ import com.samp.mobile.game.ui.CustomKeyboard;
 import com.samp.mobile.game.ui.LoadingScreen;
 import com.samp.mobile.game.ui.dialog.DialogManager;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 @Obfuscate
 public class SAMP extends GTASA implements CustomKeyboard.InputListener {
+
     private static final String TAG = "SAMP";
     private static SAMP instance;
 
@@ -23,47 +26,59 @@ public class SAMP extends GTASA implements CustomKeyboard.InputListener {
     private AttachEdit mAttachEdit;
     private LoadingScreen mLoadingScreen;
 
-    public native void sendDialogResponse(int i, int i2, int i3, byte[] str);
-    public native void initializeSAMP();
-    public native void onInputEnd(byte[] str);
-    public native void onEventBackPressed();
+    private File sampFolder;
 
     public static SAMP getInstance() {
         return instance;
     }
 
-    @Override
-    public void OnInputEnd(String str) {
-        byte[] toReturn = null;
-        try {
-            toReturn = str.getBytes("windows-1251");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            onInputEnd(toReturn);
-        } catch (UnsatisfiedLinkError e5) {
-            Log.e(TAG, e5.getMessage());
-        }
-    }
+    // Native methods
+    public native void sendDialogResponse(int dialogId, int dialogType, int response, byte[] text);
+    public native void initializeSAMP(String gameFolderPath); // pass game folder to native
+    public native void onInputEnd(byte[] str);
+    public native void onEventBackPressed();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "**** onCreate");
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "SAMP onCreate");
 
+        instance = this;
+
+        // Initialize UI
         mKeyboard = new CustomKeyboard(this);
         mDialog = new DialogManager(this);
         mAttachEdit = new AttachEdit(this);
         mLoadingScreen = new LoadingScreen(this);
 
-        instance = this;
+        // Ensure SAMP folder exists
+        sampFolder = new File(getExternalFilesDir(null), "SAMP");
+        if (!sampFolder.exists()) {
+            sampFolder.mkdirs();
+            Log.i(TAG, "Created SAMP folder at: " + sampFolder.getAbsolutePath());
+        }
 
         try {
-            initializeSAMP(); // call 2.0 native
-        } catch (UnsatisfiedLinkError e5) {
-            Log.e(TAG, e5.getMessage());
+            // Pass full path to native initialization
+            initializeSAMP(sampFolder.getAbsolutePath());
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Native initialization failed: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void OnInputEnd(String str) {
+        byte[] bytes = null;
+        try {
+            bytes = str.getBytes("windows-1251");
+        } catch (UnsupportedEncodingException e) {
+            Log.e(TAG, "Encoding error: " + e.getMessage());
+        }
+
+        try {
+            onInputEnd(bytes);
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Native onInputEnd error: " + e.getMessage());
         }
     }
 
@@ -85,33 +100,33 @@ public class SAMP extends GTASA implements CustomKeyboard.InputListener {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
+    // --- UI helper methods ---
+    public void showKeyboard() {
+        runOnUiThread(() -> mKeyboard.ShowInputLayout());
     }
 
-    @Override
-    public void onRestart() {
-        super.onRestart();
+    public void hideKeyboard() {
+        runOnUiThread(() -> mKeyboard.HideInputLayout());
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    public void showEditObject() {
+        runOnUiThread(() -> mAttachEdit.show());
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
+    public void hideEditObject() {
+        runOnUiThread(() -> mAttachEdit.hide());
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
+    public void showLoadingScreen() {
+        runOnUiThread(() -> mLoadingScreen.show());
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void hideLoadingScreen() {
+        runOnUiThread(() -> mLoadingScreen.hide());
+    }
+
+    public void exitGame() {
+        finishAndRemoveTask();
+        System.exit(0);
     }
 }

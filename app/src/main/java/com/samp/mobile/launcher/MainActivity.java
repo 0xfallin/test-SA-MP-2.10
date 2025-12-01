@@ -1,8 +1,7 @@
-package com.samp.mobile;
+package com.samp.mobile.launcher;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText editNick, editHost, editPort, editPassword;
     private Button btnSave, btnLaunch;
 
+    private File sampFolder;
     private File settingsFile;
 
     @Override
@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // UI references
         editNick = findViewById(R.id.editNick);
         editHost = findViewById(R.id.editHost);
         editPort = findViewById(R.id.editPort);
@@ -36,52 +37,43 @@ public class MainActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
         btnLaunch = findViewById(R.id.btnLaunch);
 
-        // Path to settings.json
-        File baseDir = new File(Environment.getExternalStorageDirectory(), "Android/data/com.samp.mobile/files/SAMP");
-        if (!baseDir.exists()) baseDir.mkdirs();
-        settingsFile = new File(baseDir, "settings.json");
+        // Prepare SAMP folder inside app-specific storage
+        sampFolder = new File(getExternalFilesDir(null), "SAMP");
+        if (!sampFolder.exists() && !sampFolder.mkdirs()) {
+            Log.e(TAG, "Failed to create SAMP folder at: " + sampFolder.getAbsolutePath());
+        }
+
+        // Settings file path
+        settingsFile = new File(sampFolder, "settings.json");
 
         loadSettings();
 
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                saveSettings();
-            }
-        });
+        btnSave.setOnClickListener(v -> saveSettings());
 
-        btnLaunch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                launchSAMP();
-            }
-        });
+        btnLaunch.setOnClickListener(v -> launchSAMP());
     }
 
     private void loadSettings() {
         if (!settingsFile.exists()) return;
 
-        try {
-            FileInputStream fis = new FileInputStream(settingsFile);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (FileInputStream fis = new FileInputStream(settingsFile);
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
             byte[] buffer = new byte[1024];
             int read;
             while ((read = fis.read(buffer)) != -1) {
                 baos.write(buffer, 0, read);
             }
-            fis.close();
 
-            String jsonStr = baos.toString("UTF-8");
-            JSONObject json = new JSONObject(jsonStr);
-
+            JSONObject json = new JSONObject(baos.toString("UTF-8"));
             JSONObject client = json.getJSONObject("client");
             JSONObject server = client.getJSONObject("server");
             JSONObject settings = client.getJSONObject("settings");
 
-            editHost.setText(server.getString("host"));
-            editPort.setText(String.valueOf(server.getInt("port")));
-            editPassword.setText(server.getString("password"));
-            editNick.setText(settings.getString("nick_name"));
+            editHost.setText(server.optString("host", ""));
+            editPort.setText(String.valueOf(server.optInt("port", 7777)));
+            editPassword.setText(server.optString("password", ""));
+            editNick.setText(settings.optString("nick_name", "Player"));
 
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Failed to load settings", e);
@@ -90,18 +82,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void saveSettings() {
         try {
-            JSONObject json = new JSONObject();
-
             JSONObject client = new JSONObject();
             JSONObject server = new JSONObject();
             JSONObject settings = new JSONObject();
 
-            // Server info
             server.put("host", editHost.getText().toString());
             server.put("port", Integer.parseInt(editPort.getText().toString()));
             server.put("password", editPassword.getText().toString());
 
-            // User settings
             settings.put("nick_name", editNick.getText().toString());
             settings.put("new_interface", false);
             settings.put("timestamp", false);
@@ -114,14 +102,15 @@ public class MainActivity extends AppCompatActivity {
 
             client.put("server", server);
             client.put("settings", settings);
-            json.put("client", client);
 
-            // Write to file
-            FileOutputStream fos = new FileOutputStream(settingsFile);
-            fos.write(json.toString(4).getBytes("UTF-8"));
-            fos.close();
+            JSONObject root = new JSONObject();
+            root.put("client", client);
 
-            Log.i(TAG, "Settings saved successfully");
+            try (FileOutputStream fos = new FileOutputStream(settingsFile)) {
+                fos.write(root.toString(4).getBytes("UTF-8"));
+            }
+
+            Log.i(TAG, "Settings saved to: " + settingsFile.getAbsolutePath());
 
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Failed to save settings", e);
@@ -129,6 +118,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void launchSAMP() {
+        if (!settingsFile.exists()) {
+            Log.w(TAG, "Settings file missing, saving default settings first");
+            saveSettings();
+        }
+
         try {
             Intent intent = new Intent(this, SAMP.class);
             startActivity(intent);
