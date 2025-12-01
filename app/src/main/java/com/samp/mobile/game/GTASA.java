@@ -5,134 +5,116 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.widget.Toast;
 
-import com.bytedance.shadowhook.ShadowHook;
 import com.joom.paranoid.Obfuscate;
 import com.wardrumstudios.utils.WarMedia;
 
 @Obfuscate
 public class GTASA extends WarMedia {
-    // public static GTASA gtasaSelf = null;
-    static String vmVersion;
+    private static final String TAG = "GTASA";
     private boolean once = false;
+    static String vmVersion;
 
     static {
-        ShadowHook.init(new ShadowHook.ConfigBuilder()
-                .setMode(ShadowHook.Mode.UNIQUE)
-                .build());
-
-        vmVersion = null;
-        System.out.println("**** Loading SO's");
+        System.out.println("**** Loading SO's for SAMP 2.0");
         try {
             vmVersion = System.getProperty("java.vm.version");
             System.out.println("vmVersion " + vmVersion);
-            System.loadLibrary("ImmEmulatorJ");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        catch (ExceptionInInitializerError | UnsatisfiedLinkError ignored) {
+
+        try {
+            // Core SAMP 2.0 libraries
+            System.loadLibrary("GTASA");
+            System.loadLibrary("bass");
+            System.loadLibrary("SAMP");
+
+            // Optional, safe to load if present
+            try { System.loadLibrary("ImmEmulatorJ"); } catch (UnsatisfiedLinkError ignored) {}
+            try { System.loadLibrary("cleo"); } catch (UnsatisfiedLinkError ignored) {}
+            try { System.loadLibrary("SCAnd"); } catch (UnsatisfiedLinkError ignored) {}
+            try { System.loadLibrary("TouchSenseSDK"); } catch (UnsatisfiedLinkError ignored) {}
+            try { System.loadLibrary("AML"); } catch (UnsatisfiedLinkError ignored) {}
+
+        } catch (UnsatisfiedLinkError e) {
+            e.printStackTrace();
+            Log.e(TAG, "Failed to load native libraries");
         }
-        System.loadLibrary("GTASA");
-        System.loadLibrary("bass");
-        System.loadLibrary("samp");
     }
 
-    public static void staticEnterSocialClub()
-    {
-        //  gtasaSelf.EnterSocialClub();
-    }
-
-    public static void staticExitSocialClub() {
-        //gtasaSelf.ExitSocialClub();
-    }
-
-    public void AfterDownloadFunction() {
-
-    }
-
-    public void EnterSocialClub() {
-
-    }
-
-    public void ExitSocialClub() {
-
-    }
-
-    public boolean ServiceAppCommand(String str, String str2)
-    {
-        return false;
-    }
-
-    public int ServiceAppCommandValue(String str, String str2)
-    {
-        return 0;
-    }
-
+    /** Native methods exposed by SAMP 2.0 .so */
     public native void main();
+    public native void setCurrentScreenSize(int width, int height);
 
-    public void onActivityResult(int i, int i2, Intent intent)
-    {
-        super.onActivityResult(i, i2, intent);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        if (!once) once = true;
+        Log.i(TAG, "GTASA onCreate");
+        super.onCreate(savedInstanceState);
     }
 
-    public void onConfigurationChanged(Configuration configuration)
-    {
-        super.onConfigurationChanged(configuration);
-    }
-
-    public void onCreate(Bundle bundle)
-    {
-        if(!once)
-        {
-            once = true;
-        }
-
-        System.out.println("GTASA onCreate");
-        //  gtasaSelf = this;
-        //  wantsAccelerometer = true;
-
-        super.onCreate(bundle);
-    }
-
-    public void onDestroy()
-    {
-        System.out.println("GTASA onDestroy");
+    @Override
+    public void onDestroy() {
+        Log.i(TAG, "GTASA onDestroy");
         super.onDestroy();
     }
 
-    public boolean onKeyDown(int i, KeyEvent keyEvent)
-    {
-        return super.onKeyDown(i, keyEvent);
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return super.onKeyDown(keyCode, event);
     }
 
-    public void onPause()
-    {
-        System.out.println("GTASA onPause");
+    @Override
+    public void onPause() {
+        Log.i(TAG, "GTASA onPause");
         super.onPause();
     }
 
-    public void onRestart()
-    {
-        System.out.println("GTASA onRestart");
+    @Override
+    public void onRestart() {
+        Log.i(TAG, "GTASA onRestart");
         super.onRestart();
     }
 
-    public void onResume()
-    {
-        System.out.println("GTASA onResume");
+    @Override
+    public void onResume() {
+        Log.i(TAG, "GTASA onResume");
         super.onResume();
     }
 
-    public void onStart()
-    {
-        System.out.println("GTASA onStart");
+    @Override
+    public void onStart() {
+        Log.i(TAG, "GTASA onStart");
         super.onStart();
     }
 
-    public void onStop()
-    {
-        System.out.println("GTASA onStop");
+    @Override
+    public void onStop() {
+        Log.i(TAG, "GTASA onStop");
         super.onStop();
     }
 
-    public native void setCurrentScreenSize(int i, int i2);
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    /** Optional stubs for Social Club or other removed features */
+    public void EnterSocialClub() {}
+    public void ExitSocialClub() {}
+    public void AfterDownloadFunction() {}
+
+    /** App command stubs */
+    public boolean ServiceAppCommand(String str, String str2) { return false; }
+    public int ServiceAppCommandValue(String str, String str2) { return 0; }
+
+    /** Static helper stubs */
+    public static void staticEnterSocialClub() {}
+    public static void staticExitSocialClub() {}
 }
